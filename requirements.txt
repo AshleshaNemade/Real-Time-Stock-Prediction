@@ -1,0 +1,23 @@
+pandas
+numpy
+matplotlib
+seaborn
+scikit-learn
+xgboost
+yfinance
+ta
+mlflow
+dvc
+fastapi
+uvicorn
+python-box
+pyYAML
+ensure
+joblib
+notebook
+evidently
+prometheus-client
+kafka-python
+python-dotenv
+pytest
+-e .
