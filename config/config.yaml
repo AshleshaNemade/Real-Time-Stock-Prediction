@@ -1,0 +1,17 @@
+artifacts_root: artifacts
+
+data_ingestion:
+  root_dir: artifacts/data_ingestion
+  stock_data_path: artifacts/data_ingestion/stock_data.csv
+  ticker: AAPL
+  period: 1y
+  interval: 1d
+
+data_validation:
+  root_dir: artifacts/data_validation
+  STATUS_FILE: artifacts/data_validation/status.txt
+
+feature_engineering:
+  root_dir: artifacts/feature_engineering
+  processed_data_path: artifacts/feature_engineering/processed_stock_data.csv
+  
