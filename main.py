@@ -2,7 +2,9 @@ from stock_project import logging
 from stock_project.pipeline.stage_01_data_ingestion import DataIngestionTrainingPipeline
 from stock_project.pipeline.stage_02_data_validation import DataValidationTrainingPipeline  
 from stock_project.pipeline.stage_03_feature_engineering import FeatureEngineeringPipeline
-
+from stock_project.pipeline.stage_04_data_transformation import DataTransformationPipeline
+from stock_project.pipeline.stage_05_model_training import ModelTrainingPipeline
+from stock_project.pipeline.stage_06_model_evaluation import ModelEvaluationPipeline
 
 STAGE_NAME = "DATA INGESTION STAGE"
 
@@ -33,6 +35,47 @@ STAGE_NAME = "FEATURE ENGINEERING STAGE"
 try:
     logging.info(f">>>>>> stage {STAGE_NAME} started <<<<<<")
     obj = FeatureEngineeringPipeline()
+    obj.main()
+    logging.info(f">>>>>> stage {STAGE_NAME} completed <<<<<<\n\n")
+
+except Exception as e:
+    logging.exception(e)
+    raise e
+
+
+STAGE_NAME = "DATA TRANSFORMATION STAGE"
+
+try:
+    logging.info(f">>>>>> stage {STAGE_NAME} started <<<<<<")
+    obj = DataTransformationPipeline()
+    obj.main()
+    logging.info(f">>>>>> stage {STAGE_NAME} completed <<<<<<\n\n")
+
+except Exception as e:
+    logging.exception(e)
+    raise e
+
+
+
+STAGE_NAME = "MODEL TRAINING STAGE"
+
+try:
+    logging.info(f">>>>>> stage {STAGE_NAME} started <<<<<<")
+    obj = ModelTrainingPipeline()
+    obj.main()
+    logging.info(f">>>>>> stage {STAGE_NAME} completed <<<<<<\n\n")
+
+except Exception as e:
+    logging.exception(e)
+    raise e
+
+
+
+STAGE_NAME = "MODEL EVALUATION STAGE"
+
+try:
+    logging.info(f">>>>>> stage {STAGE_NAME} started <<<<<<")
+    obj = ModelEvaluationPipeline()
     obj.main()
     logging.info(f">>>>>> stage {STAGE_NAME} completed <<<<<<\n\n")
 

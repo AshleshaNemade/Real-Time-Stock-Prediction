@@ -6,5 +6,4 @@ COLUMNS:
   Close: float64
   Volume: int64
 
-TARGET_COLUMN:
-  name: Close
+TARGET_COLUMN: Close

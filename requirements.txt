@@ -20,4 +20,5 @@ prometheus-client
 kafka-python
 python-dotenv
 pytest
+dagshub
 -e .
