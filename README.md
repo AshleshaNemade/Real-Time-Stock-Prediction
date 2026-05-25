@@ -2,7 +2,7 @@
 Real Time Stock Prediction using MLops
 
 
-# For establishing MLFlow connection(on different terminal)
+### For establishing MLFlow connection(on different terminal)
 mlflow server ^
 --backend-store-uri sqlite:///mlflow.db ^
 --default-artifact-root ./mlruns ^

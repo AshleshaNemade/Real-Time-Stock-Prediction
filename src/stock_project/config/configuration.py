@@ -119,7 +119,7 @@ class ConfigurationManager:
                 test_data_path=config.test_data_path,
                 model_path=config.model_path,
                 metric_file_name=config.metric_file_name,
-                mlflow_uri="http://127.0.0.1:5000",
+                mlflow_uri=config.mlflow_uri,
                 target_column=schema,
                 all_params=params
             )
