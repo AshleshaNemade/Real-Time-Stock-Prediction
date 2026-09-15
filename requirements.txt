@@ -17,8 +17,7 @@ joblib
 notebook
 evidently
 prometheus-client
-kafka-python
+redis
 python-dotenv
 pytest
 dagshub
--e .
