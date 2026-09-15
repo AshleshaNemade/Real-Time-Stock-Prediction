@@ -1,105 +1,154 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
 import pandas as pd
 
 from src.stock_project.pipeline.prediction_pipeline import (
     PredictionPipeline
 )
 
-from src.stock_project.services.redis_client import get_redis_client
+from src.stock_project.services.producer import (
+    get_latest_stock_data,
+    publish_stock_data,
+)
+
+from src.stock_project.services.redis_client import (
+    get_redis_client,
+)
+
 
 app = FastAPI()
+
 
 # Load prediction pipeline
 pipeline = PredictionPipeline()
 
 
-# ================================
-# Request Schema
-# ================================
-
-class StockData(BaseModel):
-
-    Open: float
-    High: float
-    Low: float
-    Volume: float
-    SMA_10: float
-    SMA_20: float
-    RSI: float
-    MACD: float
-    Daily_Return: float
-    Volatility: float
+# Redis configuration
+STREAM_NAME = "stock_data"
+GROUP_NAME = "prediction_group"
+CONSUMER_NAME = "api_consumer"
 
 
-# ================================
-# Home Route
-# ================================
+# Features expected by the trained model
+FEATURE_COLUMNS = [
+    "Open",
+    "High",
+    "Low",
+    "Volume",
+    "SMA_10",
+    "SMA_20",
+    "RSI",
+    "MACD",
+    "Daily_Return",
+    "Volatility",
+]
+
+
+class StockData(pd.DataFrame):
+    pass
+
 
 @app.get("/")
-
 def home():
-
     return {
         "message": "Stock Prediction API Running"
     }
 
 
-# ================================
-# Prediction Route
-# ================================
+@app.get("/health")
+def health():
+    return {
+        "status": "healthy"
+    }
 
-@app.post("/predict")
 
-def predict(data: StockData):
+@app.post("/produce")
+def produce():
 
-    input_data = pd.DataFrame([{
+    redis_client = get_redis_client()
 
-        "High": data.High,
-        "Low": data.Low,
-        "Open": data.Open,
-        "Volume": data.Volume,
-        "SMA_10": data.SMA_10,
-        "SMA_20": data.SMA_20,
-        "RSI": data.RSI,
-        "MACD": data.MACD,
-        "Daily_Return": data.Daily_Return,
-        "Volatility": data.Volatility
-    }])
+    stock_data = get_latest_stock_data("AAPL")
 
-    prediction = pipeline.predict(input_data)
+    message_id = redis_client.xadd(
+        STREAM_NAME,
+        stock_data
+    )
 
     return {
-        "Predicted_Close_Price":
-        round(float(prediction[0]), 2)
+        "status": "success",
+        "message_id": message_id,
+        "data": stock_data
     }
-    
-    
-@app.get("/health")
-
-def health():
-    return {"status": "healthy"}
 
 
-@app.get("/redis-test")
-def redis_test():
+@app.post("/consume")
+def consume():
+
+    redis_client = get_redis_client()
+
+    # Create consumer group if it doesn't exist
     try:
-        redis_client = get_redis_client()
-
-        redis_client.set(
-            "test_key",
-            "Redis connection successful"
+        redis_client.xgroup_create(
+            name=STREAM_NAME,
+            groupname=GROUP_NAME,
+            id="0",
+            mkstream=True
         )
 
-        value = redis_client.get("test_key")
-
-        return {
-            "status": "success",
-            "message": value
-        }
-
     except Exception as e:
+
+        if "BUSYGROUP" not in str(e):
+            raise
+
+    # Read one new message
+    messages = redis_client.xreadgroup(
+        groupname=GROUP_NAME,
+        consumername=CONSUMER_NAME,
+        streams={
+            STREAM_NAME: ">"
+        },
+        count=1,
+        block=1000
+    )
+
+    if not messages:
+
         return {
-            "status": "error",
-            "message": str(e)
+            "status": "no_data",
+            "message": "No new stock data available"
         }
+
+    for stream, entries in messages:
+
+        for message_id, data in entries:
+
+            # Prepare model input
+            input_data = pd.DataFrame([{
+                column: float(data[column])
+                for column in FEATURE_COLUMNS
+            }])
+
+            # Run prediction
+            prediction = pipeline.predict(
+                input_data
+            )
+
+            predicted_price = float(
+                prediction[0]
+            )
+
+            # Acknowledge message
+            redis_client.xack(
+                STREAM_NAME,
+                GROUP_NAME,
+                message_id
+            )
+
+            return {
+                "status": "success",
+                "message_id": message_id,
+                "symbol": data.get("symbol"),
+                "predicted_close_price": round(
+                    predicted_price,
+                    2
+                )
+            }
