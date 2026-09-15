@@ -6,6 +6,8 @@ from src.stock_project.pipeline.prediction_pipeline import (
     PredictionPipeline
 )
 
+from src.stock_project.services.redis_client import get_redis_client
+
 app = FastAPI()
 
 # Load prediction pipeline
@@ -77,3 +79,27 @@ def predict(data: StockData):
 
 def health():
     return {"status": "healthy"}
+
+
+@app.get("/redis-test")
+def redis_test():
+    try:
+        redis_client = get_redis_client()
+
+        redis_client.set(
+            "test_key",
+            "Redis connection successful"
+        )
+
+        value = redis_client.get("test_key")
+
+        return {
+            "status": "success",
+            "message": value
+        }
+
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e)
+        }
