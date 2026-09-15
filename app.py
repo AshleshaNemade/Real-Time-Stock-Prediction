@@ -71,3 +71,9 @@ def predict(data: StockData):
         "Predicted_Close_Price":
         round(float(prediction[0]), 2)
     }
+    
+    
+@app.get("/health")
+
+def health():
+    return {"status": "healthy"}
